@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurants</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Custom CSS */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f3f4f6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #1a202c;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            background-color: #fff;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .restaurant-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .restaurant-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #4a5568;
+        }
+
+        .menu-item {
+            margin-top: 10px;
+        }
+
+        .review-form {
+            margin-top: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #4a5568;
+        }
+
+        .form-group input[type="text"],
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .form-group textarea {
+            height: 100px;
+        }
+
+        .form-group button {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .form-group button:hover {
+            background-color: #667eea;
+        }
+
+        .go-back-link {
+            display: block;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #4a5568;
+            text-decoration: none;
+        }
+
+        .go-back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Restaurants</h1>
+
+    <!-- Go Back Button -->
+    <a href="/" class="go-back-link">&larr; Go Back</a>
+
+    <!-- Display the logged-in username -->
+    <div th:if="${username}" class="mb-4">
+        <p>Logged in as: <span th:text="${username}"></span></p>
+    </div>
+
+    <!-- Form to add a new restaurant, visible only to authenticated users -->
+    <div sec:authorize="isAuthenticated()" class="add-restaurant-form">
+        <h2>Add a New Restaurant</h2>
+        <form th:action="@{/restaurants/add}" method="post">
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="address">Address:</label>
+                <input type="text" id="address" name="address" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone:</label>
+                <input type="text" id="phone" name="phone" required>
+            </div>
+            <div class="form-group">
+                <button type="submit">Add Restaurant</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- List of restaurants -->
+    <ul>
+        <li th:each="restaurant : ${restaurants}">
+            <div class="restaurant-info">
+                <span class="restaurant-name" th:text="${restaurant.name}"></span>
+                <span th:text="${restaurant.address}"></span>
+                <span>tel: <span th:text="${restaurant.phone}"></span></span>
+            </div>
+            <!-- Display Menus -->
+            <div class="menus">
+                <h3>Menus</h3>
+                <ul>
+                    <li class="menu-item" th:each="menu : ${restaurant.menus}">
+                        <strong th:text="${menu.name}"></strong>: <span th:text="${menu.description}"></span>
+                    </li>
+                </ul>
+            </div>
+            <!-- Review form -->
+            <div sec:authorize="isAuthenticated()" class="review-form">
+                <form th:action="@{/reviews/add}" method="post">
+                    <div class="form-group">
+                        <label for="rating">Rating:</label>
+                        <input type="number" id="rating" name="rating" min="1" max="5" required>
+                        <span class="rating-reminder" style="color: red; font-size: 0.8rem;"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="comment">Comment:</label>
+                        <textarea id="comment" name="comment" required></textarea>
+                    </div>
+                    <!-- Since restaurant.id is dynamic, use th:value to set the value -->
+                    <input type="hidden" name="restaurantId" th:value="${restaurant.id}">
+                    <div class="form-group">
+                        <button type="submit">Submit Review</button>
+                    </div>
+                </form>
+            </div>
+            <div class="reviews">
+                <h3>Reviews</h3>
+                <ul>
+                    <li th:each="review : ${restaurant.reviews}">
+                        <!-- Display review details -->
+                        <div>
+                            <p>Rating: <span th:text="${review.rating}"></span></p>
+                            <p>Comment: <span th:text="${review.comment}"></span></p>
+                            <!-- Add more review details as needed -->
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </li>
+    </ul>
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            var ratingInput = document.getElementById('rating');
+            var reminderSpan = document.querySelector('.rating-reminder');
+
+            ratingInput.addEventListener('input', function () {
+                if (!ratingInput.value) {
+                    reminderSpan.textContent = 'Please enter a rating.';
+                } else {
+                    reminderSpan.textContent = '';
+                }
+            });
+        });
+    </script>
+</div>
+</body>
+</html>
